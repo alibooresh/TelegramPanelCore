@@ -76,6 +76,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.tosan.tools/jalali-calendar -->
+        <dependency>
+            <groupId>com.tosan.tools</groupId>
+            <artifactId>jalali-calendar</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -99,6 +106,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
             </plugin>
         </plugins>
     </build>

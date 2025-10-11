@@ -11,6 +11,15 @@ public class InquiryDto {
     private InquiryStatus status;
     private Long duration;
     private Date createdAt;
+    private String dateFa;
+
+    public String getDateFa() {
+        return dateFa;
+    }
+
+    public void setDateFa(String dateFa) {
+        this.dateFa = dateFa;
+    }
 
     public InquiryDto(Long id, InquiryStatus status, Long duration, Date createdAt) {
         this.id = id;

@@ -18,5 +18,6 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query("SELECT new com.telegram.core.dto.InquiryDto(d.id,d.status,d.duration,d.createdAt) " +
             "FROM Inquiry d WHERE d.status in :statuses")
-    Page<InquiryDto> findByStatusIn(@Param("statuses") List<InquiryStatus> statuses, Pageable pageable);}
+    Page<InquiryDto> findByStatusIn(@Param("statuses") List<InquiryStatus> statuses, Pageable pageable);
+}
 

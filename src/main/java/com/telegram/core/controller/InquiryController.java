@@ -3,9 +3,12 @@
 package com.telegram.core.controller;
 
 import com.telegram.core.InquiryStatus;
+import com.telegram.core.dto.DashboardDto;
+import com.telegram.core.dto.InquiryDetailDto;
 import com.telegram.core.dto.InquiryDto;
 import com.telegram.core.dto.InquiryRequestDto;
 import com.telegram.core.entity.Inquiry;
+import com.telegram.core.entity.InquiryDetail;
 import com.telegram.core.service.InquiryService;
 import com.telegram.core.specification.inquiry.InquirySearchFilter;
 import org.springframework.data.domain.Page;
@@ -45,6 +48,11 @@ public class InquiryController {
         return inquiryService.searchInquiries(statuses, page, size);
     }
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardDto> dashboard(){
+        return ResponseEntity.ok(inquiryService.dashboard());
+    }
+
     @PostMapping("/start")
     public ResponseEntity<String> startInquiry(@RequestBody InquiryRequestDto inquiryRequestDto) throws InterruptedException {
         inquiryService.startInquiry(inquiryRequestDto.getInquiryId());
@@ -54,5 +62,15 @@ public class InquiryController {
     @PostMapping("/getInquiryStatus")
     public ResponseEntity<InquiryStatus> getInquiryStatus(@RequestBody InquiryRequestDto inquiryRequestDto) throws InterruptedException {
         return ResponseEntity.ok(inquiryService.getInquiryStatus(inquiryRequestDto.getInquiryId()));
+    }
+
+    @PostMapping("/startSingleInquiry")
+    public ResponseEntity<InquiryDetail> startSingleInquiry(Long id) throws InterruptedException {
+        return ResponseEntity.ok(inquiryService.startSingleInquiry(id));
+    }
+
+    @PostMapping("/startSingleInquiryByPhone")
+    public ResponseEntity<InquiryDetail> startSingleInquiryByPhone(String phoneNumber) throws InterruptedException {
+        return ResponseEntity.ok(inquiryService.startSingleInquiry(phoneNumber));
     }
 }

@@ -35,8 +35,8 @@ public class UserService {
         CompletableFuture<TdApi.User> future = new CompletableFuture<>();
 
         client.send(new TdApi.GetMe(), object -> {
-            if (object instanceof TdApi.User) {
-                future.complete((TdApi.User) object);
+            if (object instanceof TdApi.User user) {
+                future.complete((TdApi.User) user);
             } else {
                 future.completeExceptionally(new RuntimeException("Failed: " + object));
             }
