@@ -1,6 +1,12 @@
 // AuthService.java
 package com.telegram.core.service;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
 import com.telegram.core.InquiryStatus;
 import com.telegram.core.config.TdlibClient;
 import com.telegram.core.dto.DashboardDto;
@@ -10,6 +16,7 @@ import com.telegram.core.entity.InquiryDetail;
 import com.telegram.core.repository.InquiryDetailRepository;
 import com.telegram.core.repository.InquiryRepository;
 import com.tosan.tools.jalali.JalaliUtil;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -77,7 +84,11 @@ public class InquiryService {
                 if (row == null) continue;
 
                 InquiryDetail inquiryDetail = new InquiryDetail();
-                inquiryDetail.setPhoneNumber(String.valueOf(BigDecimal.valueOf(row.getCell(0).getNumericCellValue()).toPlainString()));
+                if (row.getCell(0).getCellType()== CellType.STRING){
+                    inquiryDetail.setPhoneNumber(String.valueOf((row.getCell(0).getStringCellValue())));
+                }else  if (row.getCell(0).getCellType()== CellType.NUMERIC){
+                    inquiryDetail.setPhoneNumber(String.valueOf(BigDecimal.valueOf(row.getCell(0).getNumericCellValue()).toPlainString()));
+                }
                 inquiryDetail.setInquiry(inquiry);
                 inquiryDetails.add(inquiryDetail);
             }
@@ -115,7 +126,7 @@ public class InquiryService {
         for (int i = 0; i < total; i += batchSize) {
             int end = Math.min(i + batchSize, total);
             List<InquiryDetail> batch = newInquiryDetails.subList(i, end);
-            List<InquiryDetail> results = importAndGetUsersInBatches(batch);
+            List<InquiryDetail> results = callApi(batch);
             inquiryDetailRepository.saveAll(results);
             int delay = ThreadLocalRandom.current().nextInt(180000, 580000); // بین 60ms تا 300ms
             Thread.sleep(delay);
@@ -125,6 +136,44 @@ public class InquiryService {
         inquiryRepository.save(inquiry);
     }
 
+    public List<InquiryDetail> callApi(List<InquiryDetail> inquiryDetails) {
+        try {
+            List<InquiryDetail> results = inquiryDetails;
+            results.forEach(result -> result.setInquiry(null));
+            ObjectMapper mapper = new ObjectMapper();
+            HttpClient client = HttpClient.newHttpClient();
+
+            // تبدیل لیست به JSON
+            String json = mapper.writeValueAsString(results);
+
+            // ساخت درخواست POST
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://127.0.0.1:8000/inquiry/fill-user-ids"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+            // ارسال درخواست و دریافت پاسخ
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("API Error: " + response.statusCode() + " - " + response.body());
+            }
+
+            // تبدیل پاسخ JSON به List<InquiryDetail>
+            List<InquiryDetail> updatedList = mapper.readValue(
+                    response.body(),
+                    new TypeReference<List<InquiryDetail>>() {}
+            );
+            updatedList.forEach(result -> result.setInquiry(inquiryDetails.get(0).getInquiry()));
+
+            return updatedList;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return inquiryDetails; // در صورت خطا لیست اصلی رو برمی‌گردونه
+        }
+    }
     public InquiryStatus getInquiryStatus(Long inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId).get();
         if (inquiry.getInquiryDetails() == null) {
